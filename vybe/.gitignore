@@ -4,3 +4,4 @@ dev-dist
 *.local
 .env
 server/node_modules
+dist-artifact

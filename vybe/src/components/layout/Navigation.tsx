@@ -1,3 +1,4 @@
+import logo from '@/assets/icon.svg';
 import { motion } from 'framer-motion';
 import { navigate, type Route } from '@/lib/router';
 import { Icon } from '@/components/ui/Icon';
@@ -59,7 +60,7 @@ export function SideNav({ current }: { current: Route }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r hairline px-4 py-6 lg:flex">
       <button onClick={() => navigate('home')} className="mb-8 flex items-center gap-2.5 px-3">
-        <img src="/icon.svg" alt="" className="h-8 w-8 rounded-lg" />
+        <img src={logo} alt="" className="h-8 w-8 rounded-lg" />
         <span className="font-display text-xl font-bold tracking-tight">VYBE</span>
       </button>
       <nav aria-label="Main" className="flex-1">

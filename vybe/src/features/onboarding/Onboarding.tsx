@@ -1,3 +1,4 @@
+import logo from '@/assets/icon.svg';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type FormEvent } from 'react';
 import { useVybe } from '@/store/useVybe';
@@ -78,7 +79,7 @@ export function Onboarding() {
             </>
           ) : (
             <>
-              <span className="flex items-center gap-2 font-display text-lg font-bold"><img src="/icon.svg" alt="" className="h-7 w-7 rounded-lg" />VYBE</span>
+              <span className="flex items-center gap-2 font-display text-lg font-bold"><img src={logo} alt="" className="h-7 w-7 rounded-lg" />VYBE</span>
               {step === 0 && (
                 <Segmented label="lang" value={lang} onChange={(v) => updateSettings({ lang: v })} options={[{ value: 'de', label: 'DE' }, { value: 'en', label: 'EN' }]} className="w-28" />
               )}
@@ -99,7 +100,7 @@ export function Onboarding() {
                     <motion.div className="absolute inset-6 rounded-full border border-accent2/25" animate={reduce ? undefined : { rotate: -360 }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}>
                       <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgb(var(--accent))]" />
                     </motion.div>
-                    <img src="/icon.svg" alt="" className="absolute inset-12 rounded-2xl" />
+                    <img src={logo} alt="" className="absolute inset-12 rounded-2xl" />
                   </motion.div>
                   <p className="mb-3 text-xs uppercase tracking-[0.3em] text-muted">{t('app.tagline')}</p>
                   <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">{t('ob.welcome.title')}</h1>

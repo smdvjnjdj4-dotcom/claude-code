@@ -3,15 +3,17 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.1.0') },
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
   // Forward AI requests to the optional local proxy (server/ai-proxy.mjs).
   server: { proxy: { '/api': 'http://localhost:8787' } },
   preview: { proxy: { '/api': 'http://localhost:8787' } },
+  // `--mode artifact` builds one self-contained bundle (no service worker) for sandboxed hosting.
+  build: mode === 'artifact' ? { outDir: 'dist-artifact', assetsInlineLimit: 100_000_000, rollupOptions: { output: { inlineDynamicImports: true } } } : {},
   plugins: [
     react(),
-    VitePWA({
+    mode !== 'artifact' && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -34,4 +36,4 @@ export default defineConfig({
     }),
   ],
   test: { environment: 'node', setupFiles: ['./src/test-setup.ts'] },
-} as any);
+}) as any);
