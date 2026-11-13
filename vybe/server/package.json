@@ -1,0 +1,12 @@
+{
+  "name": "vybe-ai-proxy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node ai-proxy.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "zod": "^3.25.76"
+  }
+}

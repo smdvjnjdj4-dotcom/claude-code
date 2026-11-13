@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Design tokens ---------- */
+:root {
+  --bg: 8 8 13;          /* #08080D */
+  --surface: 20 20 31;   /* #14141F */
+  --elevated: 28 28 42;
+  --line: 255 255 255;   /* used with low alpha */
+  --fg: 240 240 245;
+  --muted: 160 160 180;
+  --faint: 100 100 122;
+  --accent: 139 92 246;  /* #8B5CF6 */
+  --accent2: 34 211 238; /* #22D3EE */
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 244 63 94;
+  --line-a: 0.07;
+  --glass-a: 0.6;
+  color-scheme: dark;
+}
+:root.light {
+  --bg: 246 246 250;
+  --surface: 255 255 255;
+  --elevated: 240 240 246;
+  --line: 15 15 35;
+  --fg: 18 18 28;
+  --muted: 88 88 108;
+  --faint: 140 140 160;
+  --line-a: 0.08;
+  --glass-a: 0.75;
+  color-scheme: light;
+}
+:root[data-accent='cyan'] { --accent: 34 211 238; --accent2: 139 92 246; }
+:root[data-accent='aurora'] { --accent: 52 211 153; --accent2: 34 211 238; }
+:root[data-accent='solar'] { --accent: 251 146 60; --accent2: 250 204 21; }
+:root[data-accent='nebula'] { --accent: 236 72 153; --accent2: 139 92 246; }
+:root.light[data-accent='cyan'] { --accent: 8 145 178; }
+:root.light[data-accent='solar'] { --accent: 234 88 12; --accent2: 202 138 4; }
+:root.contrast { --muted: 205 205 220; --faint: 160 160 180; --line-a: 0.18; }
+:root.light.contrast { --muted: 40 40 55; --faint: 70 70 90; --line-a: 0.25; }
+:root.large-text { font-size: 112.5%; }
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-bg text-fg font-sans antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+::selection { background: rgb(var(--accent) / 0.35); }
+* { scrollbar-width: thin; scrollbar-color: rgb(var(--line) / 0.15) transparent; }
+
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 10px; }
+
+@layer components {
+  .glass {
+    background: linear-gradient(180deg, rgb(var(--surface) / var(--glass-a)), rgb(var(--surface) / calc(var(--glass-a) - 0.1)));
+    border: 1px solid rgb(var(--line) / var(--line-a));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+  .card { @apply glass rounded-3xl shadow-card; }
+  .hairline { border-color: rgb(var(--line) / var(--line-a)); }
+  .glow-border { position: relative; }
+  .glow-border::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+    background: linear-gradient(135deg, rgb(var(--accent) / 0.55), transparent 40%, transparent 60%, rgb(var(--accent2) / 0.45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .text-gradient { background: linear-gradient(100deg, rgb(var(--accent)), rgb(var(--accent2))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .bg-gradient-accent { background: linear-gradient(120deg, rgb(var(--accent)), rgb(var(--accent2))); }
+  .input {
+    @apply w-full rounded-2xl bg-elevated/70 px-4 py-3 text-[15px] text-fg placeholder:text-faint outline-none transition;
+    border: 1px solid rgb(var(--line) / var(--line-a));
+  }
+  .input:focus { border-color: rgb(var(--accent) / 0.6); box-shadow: 0 0 0 4px rgb(var(--accent) / 0.12); }
+  .label { @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted; }
+  .num { font-variant-numeric: tabular-nums; }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-top { padding-top: env(safe-area-inset-top); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drift, .animate-shimmer { animation: none !important; }
+}
+:root.reduce-motion .animate-drift, :root.reduce-motion .animate-shimmer { animation: none !important; }
+
+/* Categorical chart palette (validated for CVD separation; light and dark stepped separately). */
+:root { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --series-6: #9085e9; --series-other: #5b5b66; }
+:root.light { --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100; --series-5: #e87ba4; --series-6: #6250d6; --series-other: #b4b4be; }
