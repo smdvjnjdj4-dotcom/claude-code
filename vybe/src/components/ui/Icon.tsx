@@ -2,14 +2,14 @@ import {
   Activity, ArrowLeft, BarChart3, BookOpen, Bot, Brain, CalendarCheck, Check, ChevronRight, Coffee, Coins, Crown, Download, Dumbbell, Flame, Footprints, Gem, Globe,
   Hexagon, Home, Infinity as InfinityIcon, Lightbulb, Lock, Medal, MessageCircle, Minus, Moon, MoreHorizontal, Music, Orbit, Palette, PenLine, PiggyBank, PieChart, Plus, Repeat,
   Settings, Share2, Shield, Snowflake, Sparkles, Sprout, Star, Sun, Sunrise, Swords, Target, Trash2, Trophy, Upload, User, Users, Wallet, X, Zap, Heart, Bell, Pencil, Send, Snowflake as Freeze,
-  Bike, Droplets, Leaf, Code, Camera, type LucideIcon,
+  Bike, Droplets, Leaf, Code, Camera, VolumeX, Volume2, Gamepad2, Video, Search, AtSign, ExternalLink, Play, Hand, Scissors, Square, Circle, MessagesSquare, Grid3x3, type LucideIcon,
 } from 'lucide-react';
 
 export const ICONS: Record<string, LucideIcon> = {
   Activity, ArrowLeft, BarChart3, BookOpen, Bot, Brain, CalendarCheck, Check, ChevronRight, Coffee, Coins, Crown, Download, Dumbbell, Flame, Footprints, Gem, Globe,
   Hexagon, Home, Infinity: InfinityIcon, Lightbulb, Lock, Medal, MessageCircle, Minus, Moon, MoreHorizontal, Music, Orbit, Palette, PenLine, PiggyBank, PieChart, Plus, Repeat,
   Settings, Share2, Shield, Snowflake, Sparkles, Sprout, Star, Sun, Sunrise, Swords, Target, Trash2, Trophy, Upload, User, Users, Wallet, X, Zap, Heart, Bell, Pencil, Send, Freeze,
-  Bike, Droplets, Leaf, Code, Camera,
+  Bike, Droplets, Leaf, Code, Camera, VolumeX, Volume2, Gamepad2, Video, Search, AtSign, ExternalLink, Play, Hand, Scissors, Square, Circle, MessagesSquare, Grid3x3,
 };
 
 /** Icons offered when creating a habit */

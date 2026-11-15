@@ -205,5 +205,7 @@ export function ledgerLabel(label: string, lang: Lang): string {
   if (label === 'money:save') return translate(lang, 'reward.label.save');
   if (label === 'community:post') return lang === 'de' ? 'Community-Beitrag' : 'Community post';
   if (label === 'community:connect') return lang === 'de' ? 'Neue Verbindung' : 'New connection';
+  if (label === 'community:game') return lang === 'de' ? 'Minispiel beendet' : 'Mini-game finished';
+  if (label === 'community:message') return lang === 'de' ? 'Nachricht geschrieben' : 'Message sent';
   return label;
 }

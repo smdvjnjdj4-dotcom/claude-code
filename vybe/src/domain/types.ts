@@ -168,8 +168,6 @@ export interface Settings {
   privacy: { localOnly: true; shareActivityWithFriends: boolean };
 }
 
-import type { MemberDoc } from '@/community/types';
-
 export interface VybeData {
   version: 1;
   onboarded: boolean;
@@ -192,6 +190,9 @@ export interface VybeData {
   /** Days that were covered by a freeze. */
   frozenDays: DateKey[];
   settings: Settings;
-  /** Own community profile in the standalone app (the shared link keeps it in its shared database). */
-  community: MemberDoc | null;
+  /**
+   * Community documents in the standalone app, keyed "<collection>/<memberId>" (yours and the demo members').
+   * The shared link keeps these in its shared database instead. Also holds per-device game secrets.
+   */
+  communityDocs: Record<string, unknown>;
 }

@@ -1,5 +1,5 @@
 import { ATTRIBUTES, type Attribute } from '@/domain/types';
-import { INTEREST_KEYS, LIMITS, type CommunityProfile, type InterestKey, type Member, type MemberDoc, type Post, type PostComment, type PostKind } from './types';
+import { CREATOR_CATEGORIES, INTEREST_KEYS, LIMITS, LINK_PLATFORMS, type CommunityProfile, type InterestKey, type Member, type MemberDoc, type Post, type PostComment, type PostKind } from './types';
 import { normInterest } from './options';
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -12,11 +12,11 @@ export function emptyInterests(): Record<InterestKey, string[]> {
 }
 
 export function emptyProfile(nickname = ''): CommunityProfile {
-  return { nickname, age: null, showAge: true, city: '', pronouns: '', bio: '', interests: emptyInterests(), discoverable: true, shareStats: true, stats: null, updatedAt: new Date().toISOString() };
+  return { nickname, handle: '', accountType: 'personal', creatorCategory: null, links: [], age: null, showAge: true, city: '', pronouns: '', bio: '', interests: emptyInterests(), discoverable: true, shareStats: true, stats: null, updatedAt: new Date().toISOString() };
 }
 
 export function emptyMemberDoc(profile: CommunityProfile): MemberDoc {
-  return { v: 1, profile, posts: [], likes: [], comments: [], follows: [], declined: [], blocked: [] };
+  return { v: 1, profile, posts: [], likes: [], comments: [], follows: [], following: [], pub: null, declined: [], blocked: [] };
 }
 
 /**
@@ -37,16 +37,28 @@ export function parseMember(id: string, raw: unknown): Member | null {
   const stats = s && typeof s.level === 'number' && typeof s.streak === 'number' && ATTRIBUTES.includes(s.topAttribute as never)
     ? { level: Math.max(1, Math.min(999, Math.floor(s.level))), streak: Math.max(0, Math.min(9999, Math.floor(s.streak))), topAttribute: s.topAttribute as Attribute }
     : null;
+  const handle = typeof p.handle === 'string' && HANDLE_RE.test(p.handle) ? p.handle : '';
+  const accountType = p.accountType === 'creator' ? 'creator' : 'personal';
+  const creatorCategory = CREATOR_CATEGORIES.includes(p.creatorCategory as never) ? (p.creatorCategory as CommunityProfile['creatorCategory']) : null;
+  const links = arr(p.links, (x) => {
+    const l = x as Record<string, unknown>;
+    if (!l || !LINK_PLATFORMS.includes(l.platform as never)) return null;
+    const value = cleanLink(l.platform as CommunityProfile['links'][number]['platform'], str(l.value, LIMITS.linkValue));
+    return value ? { platform: l.platform as CommunityProfile['links'][number]['platform'], value } : null;
+  }, 6);
   const profile: CommunityProfile = {
-    nickname, age, showAge: p.showAge !== false, city: str(p.city, LIMITS.city), pronouns: str(p.pronouns, LIMITS.pronouns), bio: str(p.bio, LIMITS.bio),
+    nickname, handle, accountType, creatorCategory, links, age, showAge: p.showAge !== false, city: str(p.city, LIMITS.city), pronouns: str(p.pronouns, LIMITS.pronouns), bio: str(p.bio, LIMITS.bio),
     interests, discoverable: p.discoverable !== false, shareStats: p.shareStats !== false, stats, updatedAt: iso(p.updatedAt),
   };
   const posts = arr<Post>(d.posts, (x) => {
     const q = x as Record<string, unknown>;
-    if (!q || typeof q.id !== 'string' || !str(q.text, LIMITS.post)) return null;
+    if (!q || typeof q.id !== 'string' || (!str(q.text, LIMITS.post) && !q.video)) return null;
     const a = q.attach as Record<string, unknown> | null;
     const attach = a && ['level', 'streak', 'achievement'].includes(a.type as string) ? { type: a.type as 'level', value: str(a.value, 60) } : null;
-    return { id: str(q.id, 64), kind: KINDS.includes(q.kind as PostKind) ? (q.kind as PostKind) : 'update', text: str(q.text, LIMITS.post), attach, at: iso(q.at) };
+    const v = q.video as Record<string, unknown> | null;
+    const video = v && typeof v.src === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(v.src) && typeof v.duration === 'number' && v.duration > 0 && v.duration <= LIMITS.maxVideoSeconds + 1
+      ? { src: v.src, duration: Math.round(v.duration * 10) / 10 } : null;
+    return { id: str(q.id, 64), kind: KINDS.includes(q.kind as PostKind) ? (q.kind as PostKind) : 'update', text: str(q.text, LIMITS.post), video, attach, at: iso(q.at) };
   }, LIMITS.posts);
   const comments = arr<PostComment>(d.comments, (x) => {
     const c = x as Record<string, unknown>;
@@ -54,12 +66,53 @@ export function parseMember(id: string, raw: unknown): Member | null {
     return { id: str(c.id, 64), postKey: str(c.postKey, 200), text: str(c.text, LIMITS.comment), at: iso(c.at) };
   }, LIMITS.comments);
   const ids = (v: unknown) => [...new Set(arr(v, (x) => (typeof x === 'string' && x.length < 200 ? x : null), 1000))];
-  return { id, v: 1, profile, posts, comments, likes: ids(d.likes).slice(0, LIMITS.likes), follows: ids(d.follows), declined: ids(d.declined), blocked: ids(d.blocked) };
+  const pk = d.pub as Record<string, unknown> | null;
+  const pub = pk && typeof pk.x === 'string' && typeof pk.y === 'string' && /^[A-Za-z0-9_-]{40,50}$/.test(pk.x) && /^[A-Za-z0-9_-]{40,50}$/.test(pk.y) ? { x: pk.x, y: pk.y } : null;
+  return { id, v: 1, profile, posts, comments, likes: ids(d.likes).slice(0, LIMITS.likes), follows: ids(d.follows), following: ids(d.following), pub, declined: ids(d.declined), blocked: ids(d.blocked) };
 }
 
 /** Strip a member to the storable document (no id/demo flags). */
 export function toDoc(m: MemberDoc): MemberDoc {
-  return { v: 1, profile: m.profile, posts: m.posts.slice(0, LIMITS.posts), likes: m.likes.slice(-LIMITS.likes), comments: m.comments.slice(-LIMITS.comments), follows: m.follows, declined: m.declined, blocked: m.blocked };
+  return { v: 1, profile: m.profile, posts: m.posts.slice(0, LIMITS.posts), likes: m.likes.slice(-LIMITS.likes), comments: m.comments.slice(-LIMITS.comments), follows: m.follows, following: m.following ?? [], pub: m.pub ?? null, declined: m.declined, blocked: m.blocked };
+}
+
+export const HANDLE_RE = /^[a-z0-9_.]{3,20}$/;
+
+/** Keep only safe link values: a bare handle for social platforms, an https URL for websites. */
+export function cleanLink(platform: CommunityProfile['links'][number]['platform'], raw: string): string {
+  const v = raw.trim();
+  if (platform === 'website') {
+    try {
+      const u = new URL(v.startsWith('http') ? v : `https://${v}`);
+      return u.protocol === 'https:' && u.hostname.includes('.') ? u.toString().slice(0, LIMITS.linkValue) : '';
+    } catch { return ''; }
+  }
+  const h = v.replace(/^@/, '').replace(/^https?:\/\/[^/]+\//, '');
+  return /^[A-Za-z0-9_.-]{1,40}$/.test(h) ? h : '';
+}
+
+export function linkUrl(platform: CommunityProfile['links'][number]['platform'], value: string): string {
+  switch (platform) {
+    case 'instagram': return `https://instagram.com/${value}`;
+    case 'tiktok': return `https://www.tiktok.com/@${value}`;
+    case 'youtube': return `https://www.youtube.com/@${value}`;
+    case 'twitch': return `https://www.twitch.tv/${value}`;
+    case 'x': return `https://x.com/${value}`;
+    default: return value;
+  }
+}
+
+export function followerCount(members: Member[], creatorId: string): number {
+  return members.filter((m) => m.id !== creatorId && m.following.includes(creatorId)).length;
+}
+
+/** Who may send a direct message to whom: connections, fans of a creator, or anyone who already wrote you. */
+export function canMessage(me: Member | null, other: Member, theyWroteMe: boolean): boolean {
+  if (!me || me.id === other.id) return false;
+  const r = relation(me, other);
+  if (r === 'blocked') return false;
+  if (r === 'connected' || theyWroteMe) return true;
+  return other.profile.accountType === 'creator' && me.following.includes(other.id);
 }
 
 // ---------------------------------------------------------------- matching

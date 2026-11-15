@@ -55,7 +55,7 @@ interface Actions {
   clearChat: () => void;
 
   setData: (fn: (d: VybeData) => VybeData) => void;
-  setCommunityDoc: (doc: VybeData['community']) => void;
+  setCommunityDocs: (fn: (docs: Record<string, unknown>) => Record<string, unknown>) => void;
   /** Idempotent social XP (e.g. first post of the day, a new connection). */
   communityReward: (key: string, xp: number, label: string) => void;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
@@ -70,7 +70,7 @@ interface Actions {
 
 export type VybeState = VybeData & Ephemeral & Actions;
 
-const DATA_KEYS: (keyof VybeData)[] = ['version', 'onboarded', 'profile', 'missions', 'habits', 'transactions', 'budgets', 'savings', 'ledger', 'achievements', 'chat', 'friends', 'challenges', 'groups', 'streakFreezes', 'lastFreezeAward', 'frozenDays', 'settings', 'community'];
+const DATA_KEYS: (keyof VybeData)[] = ['version', 'onboarded', 'profile', 'missions', 'habits', 'transactions', 'budgets', 'savings', 'ledger', 'achievements', 'chat', 'friends', 'challenges', 'groups', 'streakFreezes', 'lastFreezeAward', 'frozenDays', 'settings', 'communityDocs'];
 
 export function pickData(s: VybeState | VybeData): VybeData {
   const out: Record<string, unknown> = {};
@@ -157,8 +157,9 @@ export const useVybe = create<VybeState>()(
         clearChat: () => set({ chat: [] }),
 
         setData: (fn) => apply(engine.finalize(fn(pickData(get())))),
-        setCommunityDoc: (doc) => set({ community: doc }),
+        setCommunityDocs: (fn) => set((s) => ({ communityDocs: fn(s.communityDocs ?? {}) })),
         communityReward: (key, xp, label) => {
+          if (get().ledger.some((e) => e.key === key)) return;
           const r = award(pickData(get()), { key, xp, label, attribute: 'social' });
           apply(engine.finalize(r.data, r.event ? [r.event] : []));
         },
@@ -191,6 +192,11 @@ export const useVybe = create<VybeState>()(
         const base = { ...current, ...p } as VybeState;
         // German is the default language; users switch in onboarding or settings.
         base.settings = { ...emptyData('de').settings, ...(p.settings ?? {}) };
+        // Migrate the single local community profile of earlier versions.
+        const legacy = (p as { community?: unknown }).community;
+        base.communityDocs = { ...(p.communityDocs ?? {}) };
+        if (legacy && typeof legacy === 'object' && !base.communityDocs['members/local-me']) base.communityDocs['members/local-me'] = legacy;
+        delete (base as { community?: unknown }).community;
         return base;
       },
       onRehydrateStorage: () => (state) => {

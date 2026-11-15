@@ -11,6 +11,7 @@ import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { HomeScreen } from '@/features/home/HomeScreen';
 import { PageSkeleton } from '@/components/layout/PageSkeleton';
+import { CommunityProvider } from '@/community/CommunityContext';
 
 const MissionsScreen = lazy(() => import('@/features/missions/MissionsScreen'));
 const HabitsScreen = lazy(() => import('@/features/habits/HabitsScreen'));
@@ -59,6 +60,7 @@ export default function App() {
       ) : !onboarded || justOnboarded ? (
         <Onboarding />
       ) : (
+        <CommunityProvider>
         <div className="flex min-h-dvh">
           <SideNav current={route} />
           <div className="min-w-0 flex-1">
@@ -72,6 +74,7 @@ export default function App() {
           </div>
           <BottomNav current={route} />
         </div>
+        </CommunityProvider>
       )}
       <RewardLayer />
       <Toasts />

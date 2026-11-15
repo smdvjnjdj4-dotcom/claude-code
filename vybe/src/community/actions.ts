@@ -12,6 +12,8 @@ export const act = {
   decline: (id: string) => (d: MemberDoc): MemberDoc => ({ ...d, declined: add(d.declined, id) }),
   block: (id: string) => (d: MemberDoc): MemberDoc => ({ ...d, blocked: add(d.blocked, id), follows: del(d.follows, id) }),
   unblock: (id: string) => (d: MemberDoc): MemberDoc => ({ ...d, blocked: del(d.blocked, id) }),
+  follow: (id: string) => (d: MemberDoc): MemberDoc => ({ ...d, following: add(d.following ?? [], id) }),
+  unfollow: (id: string) => (d: MemberDoc): MemberDoc => ({ ...d, following: del(d.following ?? [], id) }),
   post: (p: Omit<Post, 'id' | 'at'>) => (d: MemberDoc): MemberDoc => ({ ...d, posts: [{ ...p, id: uid('p').slice(0, 40), at: new Date().toISOString() }, ...d.posts].slice(0, LIMITS.posts) }),
   deletePost: (postId: string) => (d: MemberDoc): MemberDoc => ({ ...d, posts: d.posts.filter((p) => p.id !== postId) }),
   toggleLike: (key: string) => (d: MemberDoc): MemberDoc => ({ ...d, likes: d.likes.includes(key) ? del(d.likes, key) : [...d.likes, key].slice(-LIMITS.likes) }),

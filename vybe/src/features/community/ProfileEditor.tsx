@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
-import { Button, Chip, Field, Input, Toggle } from '@/components/ui/primitives';
+import { Button, Chip, Field, Input, Segmented, Toggle } from '@/components/ui/primitives';
 import { Icon } from '@/components/ui/Icon';
 import { useCT, type CKey } from '@/community/i18n';
 import { FREE_TEXT_KEYS, OPTIONS, interestLabel, normInterest } from '@/community/options';
-import { INTEREST_KEYS, LIMITS, type CommunityProfile, type InterestKey, type MemberDoc } from '@/community/types';
-import { emptyMemberDoc, emptyProfile } from '@/community/model';
-import type { CommunityState } from '@/community/useCommunity';
+import { CREATOR_CATEGORIES, INTEREST_KEYS, LIMITS, LINK_PLATFORMS, type CommunityProfile, type InterestKey, type LinkPlatform, type MemberDoc } from '@/community/types';
+import { cleanLink, emptyMemberDoc, emptyProfile, HANDLE_RE } from '@/community/model';
+import { useCommunity } from '@/community/CommunityContext';
 import { useVybe } from '@/store/useVybe';
 import { useProgress } from '@/store/selectors';
 import { cn } from '@/lib/cn';
@@ -24,7 +24,8 @@ export function useStatsSnapshot(): CommunityProfile['stats'] {
   return { level: level.level, streak, topAttribute: top.id };
 }
 
-export function ProfileEditor({ open, onClose, community }: { open: boolean; onClose: () => void; community: CommunityState }) {
+export function ProfileEditor({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const community = useCommunity();
   const { ct } = useCT();
   const toast = useVybe((s) => s.toast);
   const ownName = useVybe((s) => s.profile?.name ?? '');
@@ -32,14 +33,18 @@ export function ProfileEditor({ open, onClose, community }: { open: boolean; onC
   const existing = community.me;
   const [p, setP] = useState<CommunityProfile>(emptyProfile());
   const [ageText, setAgeText] = useState('');
-  const [errors, setErrors] = useState<{ nick?: string; age?: string }>({});
+  const [errors, setErrors] = useState<{ nick?: string; age?: string; handle?: string }>({});
+  const [links, setLinks] = useState<Record<LinkPlatform, string>>({} as Record<LinkPlatform, string>);
   const [confirmDel, setConfirmDel] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    const base = existing?.profile ?? emptyProfile(ownName.slice(0, LIMITS.nickname[1]));
+    const fresh = emptyProfile(ownName.slice(0, LIMITS.nickname[1]));
+    const suggested = ownName.toLowerCase().normalize('NFD').replace(/[^a-z0-9_.]/g, '').slice(0, 16);
+    const base = existing?.profile ?? { ...fresh, handle: suggested.length >= 3 ? suggested : '' };
     setP(base);
+    setLinks(Object.fromEntries(base.links.map((l) => [l.platform, l.value])) as Record<LinkPlatform, string>);
     setAgeText(base.age ? String(base.age) : '');
     setErrors({});
     setConfirmDel(false);
@@ -53,9 +58,13 @@ export function ProfileEditor({ open, onClose, community }: { open: boolean; onC
     const e: typeof errors = {};
     if (nick.length < LIMITS.nickname[0] || nick.length > LIMITS.nickname[1]) e.nick = ct('edit.err.nick');
     if (!Number.isInteger(age) || age < LIMITS.minAge || age > LIMITS.maxAge) e.age = ct('edit.err.age');
+    const handle = p.handle.trim().toLowerCase().replace(/^@/, '');
+    if (!HANDLE_RE.test(handle)) e.handle = ct('edit.err.handle');
+    else if (community.members.some((m) => m.id !== community.me?.id && m.profile.handle === handle)) e.handle = ct('edit.err.handleTaken');
     setErrors(e);
-    if (e.nick || e.age) return;
-    const profile: CommunityProfile = { ...p, nickname: nick, age, city: p.city.trim(), pronouns: p.pronouns.trim(), bio: p.bio.trim(), stats: p.shareStats ? stats : null, updatedAt: new Date().toISOString() };
+    if (e.nick || e.age || e.handle) return;
+    const cleanLinks = LINK_PLATFORMS.flatMap((pl) => { const v = cleanLink(pl, links[pl] ?? ''); return v ? [{ platform: pl, value: v }] : []; });
+    const profile: CommunityProfile = { ...p, handle, links: p.accountType === 'creator' ? cleanLinks : [], creatorCategory: p.accountType === 'creator' ? p.creatorCategory : null, nickname: nick, age, city: p.city.trim(), pronouns: p.pronouns.trim(), bio: p.bio.trim(), stats: p.shareStats ? stats : null, updatedAt: new Date().toISOString() };
     setBusy(true);
     const ok = existing ? await community.save((d: MemberDoc) => ({ ...d, profile })) : await community.create(emptyMemberDoc(profile));
     setBusy(false);
@@ -63,7 +72,7 @@ export function ProfileEditor({ open, onClose, community }: { open: boolean; onC
   };
 
   const remove = async () => {
-    await community.backend?.deleteMine();
+    await Promise.all((['members', 'outbox', 'games'] as const).map((c) => community.backend?.remove(c)));
     toast(ct('edit.deleted'));
     onClose();
   };
@@ -85,6 +94,12 @@ export function ProfileEditor({ open, onClose, community }: { open: boolean; onC
             <Field label={ct('edit.age')} error={errors.age}><Input id="cp-age" inputMode="numeric" value={ageText} maxLength={2} onChange={(e) => setAgeText(e.target.value.replace(/\D/g, ''))} /></Field>
           </div>
           <p className="-mt-2 text-xs text-faint">{ct('edit.ageHint')}</p>
+          <Field label={ct('edit.handle')} error={errors.handle} hint={ct('edit.handleHint')}>
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint">@</span>
+              <Input id="cp-handle" value={p.handle} maxLength={21} onChange={(e) => setP({ ...p, handle: e.target.value.toLowerCase().replace(/[^a-z0-9_.@]/g, '') })} className="pl-8" autoCapitalize="off" spellCheck={false} />
+            </div>
+          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={ct('edit.city')}><Input id="cp-city" value={p.city} maxLength={LIMITS.city} onChange={(e) => setP({ ...p, city: e.target.value })} /></Field>
             <Field label={ct('edit.pronouns')}><Input id="cp-pron" value={p.pronouns} maxLength={LIMITS.pronouns} onChange={(e) => setP({ ...p, pronouns: e.target.value })} /></Field>
@@ -92,6 +107,32 @@ export function ProfileEditor({ open, onClose, community }: { open: boolean; onC
           <Field label={ct('edit.bio')} hint={`${p.bio.length}/${LIMITS.bio}`}>
             <textarea id="cp-bio" className="input min-h-[88px] resize-y" maxLength={LIMITS.bio} placeholder={ct('edit.bioPh')} value={p.bio} onChange={(e) => setP({ ...p, bio: e.target.value })} />
           </Field>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-wider text-muted">{ct('edit.account')}</h3>
+          <Segmented label="acctype" value={p.accountType} onChange={(v) => setP({ ...p, accountType: v, creatorCategory: v === 'creator' ? p.creatorCategory ?? 'lifestyle' : null })}
+            options={[{ value: 'personal', label: ct('edit.personal') }, { value: 'creator', label: ct('edit.creator') }]} />
+          {p.accountType === 'creator' && (
+            <div className="space-y-4 rounded-2xl border border-accent/25 bg-accent/[0.05] p-4">
+              <p className="text-xs text-muted">{ct('edit.creatorHint')}</p>
+              <div>
+                <span className="label">{ct('edit.category')}</span>
+                <div className="flex flex-wrap gap-2">{CREATOR_CATEGORIES.map((c) => <Chip key={c} selected={p.creatorCategory === c} onClick={() => setP({ ...p, creatorCategory: c })} className="py-1.5 text-[13px]">{ct(`ccat.${c}` as CKey)}</Chip>)}</div>
+              </div>
+              <div>
+                <span className="label">{ct('edit.links')}</span>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {LINK_PLATFORMS.map((pl) => (
+                    <label key={pl} className="flex items-center gap-2">
+                      <span className="w-20 shrink-0 text-xs text-muted">{ct(`plat.${pl}` as CKey)}</span>
+                      <Input id={`cp-link-${pl}`} value={links[pl] ?? ''} maxLength={LIMITS.linkValue} onChange={(e) => setLinks({ ...links, [pl]: e.target.value })} placeholder={pl === 'website' ? ct('edit.webPh') : ct('edit.linkPh')} className="py-2 text-sm" autoCapitalize="off" spellCheck={false} />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {ORDER.map((k) => (
