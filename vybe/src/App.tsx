@@ -22,6 +22,7 @@ const CompanionScreen = lazy(() => import('@/features/companion/CompanionScreen'
 const StatsScreen = lazy(() => import('@/features/stats/StatsScreen'));
 const SettingsScreen = lazy(() => import('@/features/settings/SettingsScreen'));
 const MoreScreen = lazy(() => import('@/features/settings/MoreScreen'));
+const CommunityScreen = lazy(() => import('@/features/community/CommunityScreen'));
 
 function Screen({ route }: { route: Route }) {
   switch (route) {
@@ -35,6 +36,7 @@ function Screen({ route }: { route: Route }) {
     case 'stats': return <StatsScreen />;
     case 'settings': return <SettingsScreen />;
     case 'more': return <MoreScreen />;
+    case 'community': return <CommunityScreen />;
     default: return <HomeScreen />;
   }
 }

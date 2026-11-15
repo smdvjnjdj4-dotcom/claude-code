@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 /** Tiny hash router — no dependency, works offline and inside a PWA/Capacitor shell. */
-export const ROUTES = ['home', 'missions', 'habits', 'money', 'character', 'achievements', 'social', 'companion', 'stats', 'settings', 'more'] as const;
+export const ROUTES = ['home', 'missions', 'habits', 'money', 'character', 'achievements', 'social', 'companion', 'stats', 'settings', 'more', 'community'] as const;
 export type Route = (typeof ROUTES)[number];
 
 function parse(): { route: Route; param?: string } {

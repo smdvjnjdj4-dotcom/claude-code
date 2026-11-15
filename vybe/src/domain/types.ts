@@ -168,6 +168,8 @@ export interface Settings {
   privacy: { localOnly: true; shareActivityWithFriends: boolean };
 }
 
+import type { MemberDoc } from '@/community/types';
+
 export interface VybeData {
   version: 1;
   onboarded: boolean;
@@ -190,4 +192,6 @@ export interface VybeData {
   /** Days that were covered by a freeze. */
   frozenDays: DateKey[];
   settings: Settings;
+  /** Own community profile in the standalone app (the shared link keeps it in its shared database). */
+  community: MemberDoc | null;
 }

@@ -162,6 +162,18 @@ export function HomeScreen() {
               )}
             </motion.section>
 
+            {/* Community teaser */}
+            <motion.section variants={item}>
+              <Card interactive onClick={() => navigate('community')} role="link" aria-label={t('nav.community')} className="flex items-center gap-4 p-4">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-accent text-white shadow-glow"><Icon name="Users" size={20} /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-display font-semibold">{t('nav.community')}</div>
+                  <div className="text-xs text-muted">{t('home.community')}</div>
+                </div>
+                <Icon name="ChevronRight" size={18} className="text-faint" />
+              </Card>
+            </motion.section>
+
             {/* Weekly progress */}
             <motion.section variants={item}>
               <Card>

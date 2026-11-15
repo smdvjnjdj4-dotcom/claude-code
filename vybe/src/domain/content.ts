@@ -124,6 +124,7 @@ export function emptyData(lang: Lang = 'de'): VybeData {
     streakFreezes: 0,
     frozenDays: [],
     settings: defaultSettings(lang),
+    community: null,
   };
 }
 

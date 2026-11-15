@@ -4,7 +4,7 @@ import type { Attribute, Difficulty, Lang } from '@/domain/types';
 const de = {
   'app.tagline': 'Your Life. Your Universe.',
   'nav.home': 'Home', 'nav.missions': 'Missionen', 'nav.habits': 'Habits', 'nav.money': 'Geld', 'nav.more': 'Mehr',
-  'nav.character': 'Charakter', 'nav.achievements': 'Erfolge', 'nav.social': 'Social', 'nav.companion': 'Companion', 'nav.stats': 'Statistik', 'nav.settings': 'Einstellungen',
+  'nav.character': 'Charakter', 'nav.achievements': 'Erfolge', 'nav.social': 'Challenges', 'nav.companion': 'Companion', 'nav.stats': 'Statistik', 'nav.settings': 'Einstellungen', 'nav.community': 'Community',
   'common.save': 'Speichern', 'common.cancel': 'Abbrechen', 'common.delete': 'Löschen', 'common.edit': 'Bearbeiten', 'common.add': 'Hinzufügen', 'common.close': 'Schließen',
   'common.back': 'Zurück', 'common.next': 'Weiter', 'common.done': 'Fertig', 'common.today': 'Heute', 'common.yesterday': 'Gestern', 'common.all': 'Alle', 'common.confirm': 'Bestätigen',
   'common.demo': 'Demo', 'common.level': 'Level', 'common.xp': 'XP', 'common.days': 'Tage', 'common.weeks': 'Wochen', 'common.of': 'von', 'common.required': 'Pflichtfeld', 'common.optional': 'optional',
@@ -27,7 +27,7 @@ const de = {
   // home
   'home.morning': 'Guten Morgen', 'home.afternoon': 'Guten Tag', 'home.evening': 'Guten Abend', 'home.night': 'Gute Nacht',
   'home.dailyProgress': 'Tagesfortschritt', 'home.streak': 'Serie', 'home.freezes': 'Freezes', 'home.todayMissions': 'Heutige Missionen', 'home.todayHabits': 'Heutige Gewohnheiten',
-  'home.week': 'Diese Woche', 'home.quick': 'Schnellaktionen', 'home.qa.mission': 'Mission', 'home.qa.expense': 'Ausgabe', 'home.qa.habit': 'Habit', 'home.qa.ask': 'Fragen',
+  'home.week': 'Diese Woche', 'home.community': 'Finde Menschen mit deinen Interessen – Musik, Filme, Hobbys.', 'home.quick': 'Schnellaktionen', 'home.qa.mission': 'Mission', 'home.qa.expense': 'Ausgabe', 'home.qa.habit': 'Habit', 'home.qa.ask': 'Fragen',
   'home.toNext': '{xp} XP bis Level {level}', 'home.allDone': 'Alles erledigt für heute. Erholung ist auch Fortschritt.', 'home.xpToday': 'XP heute',
   'home.demoBanner': 'Demo-Profil mit Beispieldaten. Setze es in den Einstellungen zurück, um mit deinem eigenen Profil zu starten.', 'home.demoReset': 'Eigenes Profil starten',
   'home.noMissions': 'Keine Missionen für heute', 'home.noMissionsText': 'Erstelle eine Mission oder lass dir vom Companion einen Tagesplan vorschlagen.',
@@ -103,7 +103,7 @@ export type TKey = keyof typeof de;
 const en: Record<TKey, string> = {
   'app.tagline': 'Your Life. Your Universe.',
   'nav.home': 'Home', 'nav.missions': 'Missions', 'nav.habits': 'Habits', 'nav.money': 'Money', 'nav.more': 'More',
-  'nav.character': 'Character', 'nav.achievements': 'Achievements', 'nav.social': 'Social', 'nav.companion': 'Companion', 'nav.stats': 'Statistics', 'nav.settings': 'Settings',
+  'nav.character': 'Character', 'nav.achievements': 'Achievements', 'nav.social': 'Challenges', 'nav.companion': 'Companion', 'nav.stats': 'Statistics', 'nav.settings': 'Settings', 'nav.community': 'Community',
   'common.save': 'Save', 'common.cancel': 'Cancel', 'common.delete': 'Delete', 'common.edit': 'Edit', 'common.add': 'Add', 'common.close': 'Close',
   'common.back': 'Back', 'common.next': 'Next', 'common.done': 'Done', 'common.today': 'Today', 'common.yesterday': 'Yesterday', 'common.all': 'All', 'common.confirm': 'Confirm',
   'common.demo': 'Demo', 'common.level': 'Level', 'common.xp': 'XP', 'common.days': 'days', 'common.weeks': 'weeks', 'common.of': 'of', 'common.required': 'Required', 'common.optional': 'optional',
@@ -124,7 +124,7 @@ const en: Record<TKey, string> = {
   'mot.growth': 'Personal growth', 'mot.health': 'Health', 'mot.freedom': 'Financial freedom', 'mot.recognition': 'Recognition', 'mot.curiosity': 'Curiosity', 'mot.people': 'People I care about', 'mot.competition': 'Competition', 'mot.calm': 'Inner calm',
   'home.morning': 'Good morning', 'home.afternoon': 'Good afternoon', 'home.evening': 'Good evening', 'home.night': 'Good night',
   'home.dailyProgress': 'Daily progress', 'home.streak': 'Streak', 'home.freezes': 'Freezes', 'home.todayMissions': "Today's missions", 'home.todayHabits': "Today's habits",
-  'home.week': 'This week', 'home.quick': 'Quick actions', 'home.qa.mission': 'Mission', 'home.qa.expense': 'Expense', 'home.qa.habit': 'Habit', 'home.qa.ask': 'Ask',
+  'home.week': 'This week', 'home.community': 'Find people who share your interests — music, films, hobbies.', 'home.quick': 'Quick actions', 'home.qa.mission': 'Mission', 'home.qa.expense': 'Expense', 'home.qa.habit': 'Habit', 'home.qa.ask': 'Ask',
   'home.toNext': '{xp} XP to level {level}', 'home.allDone': 'All done for today. Rest is progress, too.', 'home.xpToday': 'XP today',
   'home.demoBanner': 'Demo profile with sample data. Reset it in Settings to start with your own profile.', 'home.demoReset': 'Start my own profile',
   'home.noMissions': 'No missions for today', 'home.noMissionsText': 'Create a mission or let the companion suggest a plan for your day.',
@@ -203,5 +203,7 @@ export function useT() {
 export function ledgerLabel(label: string, lang: Lang): string {
   if (label === 'money:track') return translate(lang, 'reward.label.track');
   if (label === 'money:save') return translate(lang, 'reward.label.save');
+  if (label === 'community:post') return lang === 'de' ? 'Community-Beitrag' : 'Community post';
+  if (label === 'community:connect') return lang === 'de' ? 'Neue Verbindung' : 'New connection';
   return label;
 }

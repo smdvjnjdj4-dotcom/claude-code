@@ -36,6 +36,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'habit_seed', rarity: 'common', icon: 'Sprout', title: { de: 'Saatkorn', en: 'Seedling' }, desc: { de: 'Hake zum ersten Mal eine Gewohnheit ab.', en: 'Log a habit for the first time.' }, progress: (d) => p(habitLogs(d), 1) },
   { id: 'money_aware', rarity: 'common', icon: 'Wallet', title: { de: 'Geldbewusst', en: 'Money Aware' }, desc: { de: 'Erfasse deine erste Buchung.', en: 'Log your first transaction.' }, progress: (d) => p(d.transactions.filter((t) => t.source !== 'demo').length, 1) },
   { id: 'first_talk', rarity: 'common', icon: 'MessageCircle', title: { de: 'Hallo, Companion', en: 'Hello, Companion' }, desc: { de: 'Stelle deinem Companion eine Frage.', en: 'Ask your companion something.' }, progress: (d) => p(d.chat.filter((c) => c.role === 'user').length, 1) },
+  { id: 'hello_world', rarity: 'common', icon: 'Send', title: { de: 'Hallo Welt', en: 'Hello World' }, desc: { de: 'Teile deinen ersten Beitrag in der Community.', en: 'Share your first community post.' }, progress: (d) => p(Math.min(1, d.ledger.filter((e) => e.key.startsWith('post:')).length), 1) },
   { id: 'streak_3', rarity: 'common', icon: 'Flame', title: { de: 'Warmgelaufen', en: 'Warmed Up' }, desc: { de: 'Erreiche eine 3-Tage-Serie.', en: 'Reach a 3-day streak.' }, progress: (d) => p(bestStreak(d), 3) },
   // Rare
   { id: 'missions_25', rarity: 'rare', icon: 'Target', title: { de: 'Missionsprofi', en: 'Mission Pro' }, desc: { de: 'Schließe 25 Missionen ab.', en: 'Complete 25 missions.' }, progress: (d) => p(completedMissionCount(d), 25) },
@@ -43,6 +44,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'habit_7', rarity: 'rare', icon: 'Repeat', title: { de: 'Rhythmus', en: 'Rhythm' }, desc: { de: 'Halte eine Gewohnheit 7 Tage in Folge.', en: 'Keep a habit 7 days in a row.' }, progress: (d) => p(maxHabitStreak(d), 7) },
   { id: 'level_5', rarity: 'rare', icon: 'Sparkles', title: { de: 'Aufsteiger', en: 'Rising' }, desc: { de: 'Erreiche Level 5.', en: 'Reach level 5.' }, progress: (d) => p(level(d), 5) },
   { id: 'well_rounded', rarity: 'rare', icon: 'Hexagon', title: { de: 'Vielseitig', en: 'Well-Rounded' }, desc: { de: 'Sammle XP in allen sechs Attributen.', en: 'Earn XP in all six attributes.' }, progress: (d) => p(touchedAttributes(d), 6) },
+  { id: 'connector', rarity: 'rare', icon: 'Users', title: { de: 'Netzwerker', en: 'Connector' }, desc: { de: 'Verbinde dich mit 3 Menschen in der Community.', en: 'Connect with 3 people in the community.' }, progress: (d) => p(d.ledger.filter((e) => e.key.startsWith('connect:')).length, 3) },
   { id: 'budgeteer', rarity: 'rare', icon: 'PieChart', title: { de: 'Budget-Stratege', en: 'Budgeteer' }, desc: { de: 'Lege 3 Monatsbudgets fest.', en: 'Set 3 monthly budgets.' }, progress: (d) => p(d.budgets.length, 3) },
   // Epic
   { id: 'missions_100', rarity: 'epic', icon: 'Swords', title: { de: 'Hundert Siege', en: 'Hundred Wins' }, desc: { de: 'Schließe 100 Missionen ab.', en: 'Complete 100 missions.' }, progress: (d) => p(completedMissionCount(d), 100) },

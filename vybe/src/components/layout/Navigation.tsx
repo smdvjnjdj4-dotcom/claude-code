@@ -13,14 +13,15 @@ const MOBILE: { route: Route; icon: string; label: TKey }[] = [
   { route: 'home', icon: 'Home', label: 'nav.home' },
   { route: 'missions', icon: 'Target', label: 'nav.missions' },
   { route: 'habits', icon: 'Repeat', label: 'nav.habits' },
-  { route: 'money', icon: 'Wallet', label: 'nav.money' },
+  { route: 'community', icon: 'Users', label: 'nav.community' },
   { route: 'more', icon: 'MoreHorizontal', label: 'nav.more' },
 ];
 export const SECONDARY: { route: Route; icon: string; label: TKey }[] = [
+  { route: 'money', icon: 'Wallet', label: 'nav.money' },
   { route: 'character', icon: 'Hexagon', label: 'nav.character' },
   { route: 'companion', icon: 'Sparkles', label: 'nav.companion' },
   { route: 'achievements', icon: 'Trophy', label: 'nav.achievements' },
-  { route: 'social', icon: 'Users', label: 'nav.social' },
+  { route: 'social', icon: 'Swords', label: 'nav.social' },
   { route: 'stats', icon: 'BarChart3', label: 'nav.stats' },
   { route: 'settings', icon: 'Settings', label: 'nav.settings' },
 ];

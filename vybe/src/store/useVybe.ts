@@ -55,6 +55,9 @@ interface Actions {
   clearChat: () => void;
 
   setData: (fn: (d: VybeData) => VybeData) => void;
+  setCommunityDoc: (doc: VybeData['community']) => void;
+  /** Idempotent social XP (e.g. first post of the day, a new connection). */
+  communityReward: (key: string, xp: number, label: string) => void;
   importJson: (json: string) => { ok: true } | { ok: false; error: string };
 
   shiftUnlock: () => void;
@@ -67,7 +70,7 @@ interface Actions {
 
 export type VybeState = VybeData & Ephemeral & Actions;
 
-const DATA_KEYS: (keyof VybeData)[] = ['version', 'onboarded', 'profile', 'missions', 'habits', 'transactions', 'budgets', 'savings', 'ledger', 'achievements', 'chat', 'friends', 'challenges', 'groups', 'streakFreezes', 'lastFreezeAward', 'frozenDays', 'settings'];
+const DATA_KEYS: (keyof VybeData)[] = ['version', 'onboarded', 'profile', 'missions', 'habits', 'transactions', 'budgets', 'savings', 'ledger', 'achievements', 'chat', 'friends', 'challenges', 'groups', 'streakFreezes', 'lastFreezeAward', 'frozenDays', 'settings', 'community'];
 
 export function pickData(s: VybeState | VybeData): VybeData {
   const out: Record<string, unknown> = {};
@@ -154,6 +157,11 @@ export const useVybe = create<VybeState>()(
         clearChat: () => set({ chat: [] }),
 
         setData: (fn) => apply(engine.finalize(fn(pickData(get())))),
+        setCommunityDoc: (doc) => set({ community: doc }),
+        communityReward: (key, xp, label) => {
+          const r = award(pickData(get()), { key, xp, label, attribute: 'social' });
+          apply(engine.finalize(r.data, r.event ? [r.event] : []));
+        },
         importJson: (json) => {
           const res = validateImport(json);
           if (!res.ok) return res;
@@ -196,7 +204,7 @@ export const useVybe = create<VybeState>()(
   ),
 );
 
-import { levelFromXp, totalXp } from '@/domain/progression';
+import { award, levelFromXp, totalXp } from '@/domain/progression';
 import { todayKey as todayKeyLocal } from '@/lib/date';
 function levelOf(s: VybeData) {
   return levelFromXp(totalXp(s.ledger)).level;

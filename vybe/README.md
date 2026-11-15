@@ -126,6 +126,12 @@ UI and business logic are separate. Screens call store actions. The store calls 
 - **Achievements:** 19 badges across 4 rarities, filters, progress bars, a detail sheet, an unlock reveal with particles, and sharing through the Web Share API or the clipboard.
 - **Statistics:** total XP, best streak, active days, completed missions, a 14-day XP chart, XP per attribute, and the full XP history.
 - **Companion:** chat UI with suggestion chips, a typing indicator and mission proposals that you **must confirm**. Demo mode covers four intents (plan my day, break down a goal, weekly reflection, focus tips) using your real data. Live mode goes through your own proxy.
+- **Community:** a profile with display name, age (16+), city, pronouns, bio and a large set of interests: music genres, favourite artists, film and series genres, favourite films and series, hobbies, sports, games, books, languages, personality and what you're looking for. Every category has a curated list and also accepts your own entries.
+  - **Discover** ranks people by an interest-match score and shows what you have in common. You can search and filter by what people are looking for and by age.
+  - **Connect** works both ways: a request becomes a connection once the other person accepts. You can also decline or block.
+  - **Feed:** posts typed as update, win, question, tip or "looking for a buddy", with optional attached progress (level, streak, last achievement), likes, comments, and deletion of your own posts.
+  - **Visibility settings:** whether you appear in Discover, and whether your age and stats are shown.
+  - Posting (+10 Social XP once a day) and each new connection (+15 Social XP) feed your character, with two new achievements.
 - **Social:** challenges you can join or leave, with your *real* progress computed from your XP history, a comparison leaderboard and your own challenges. You can also keep local friends and private groups, and share your progress.
 - **Settings:** profile, daily time, theme (dark / light / system), aura, language (DE/EN), reduced motion, larger text, high contrast, notifications (habit reminders and a daily-plan reminder), privacy (hide amounts), base currency, AI endpoint test, JSON export and import (validated), demo reload, and delete-all (you must type a confirmation word).
 - **App-wide:**
@@ -141,6 +147,7 @@ UI and business logic are separate. Screens call store actions. The store calls 
 ## 6. Demo-only or incomplete (honest list)
 
 - **Companion without a backend** is rule-based (demo mode). It is labelled on screen and on every reply. Live AI needs `server/ai-proxy.mjs` and your own API key. I tested the proxy's routing and validation locally, but **not against the real API**, because no key was available in this environment.
+- **The community is only live in the shared VYBE link** (the claude.ai artifact). There, profiles, posts, likes, comments and connections sit in the link's shared database, and everyone who opens the link sees them in real time. Each person can only write their own record, and the link's owner can remove posts as a moderator. Taking part needs at least the "Contributor" (Mitwirkende) access level; viewers can only read. The installable PWA has no community server yet, so your profile stays on the device and the other members are labelled demo profiles. The `CommunityBackend` interface (`src/community/backend.ts`) is where a real server plugs in. There are no direct messages and no reporting flow yet.
 - **Social is local-only.** Demo challenge participants (Mira, Jonas, …) are simulated and tagged **Demo**. Friends and groups are stored only on this device, with no sync and no invitations. Online multiplayer is *not* implemented. The `SocialBackend` interface is in place for it.
 - **Reminders** fire only while VYBE is open (foreground or background tab). Real push notifications to a closed app need a push server, which is not implemented.
 - **There is no bank sync.** All money data is manual. Amounts in other currencies are stored and shown but **not converted**: they are left out of the base-currency balance, and the app says so.
