@@ -1,0 +1,23 @@
+VYBE – Sprecherskript (61 s), Zeiten passend zur Untertitelspur
+
+00:00–00:04  Was wäre, wenn dein Leben plötzlich ein Spiel wäre?
+00:05–00:06  Jede Aufgabe.
+00:06–00:08  Jede Gewohnheit.
+00:08–00:10  Jeder Schritt nach vorne.
+00:10–00:12  Alles bringt dich weiter.
+00:13–00:15  Entwickle deinen Charakter.
+00:15–00:18  Verbessere deine Fähigkeiten.
+00:18–00:22  Und werde jeden Tag ein Stück stärker.
+00:23–00:26  Ob Lernen, Training oder Sparen.
+00:26–00:31  VYBE macht deinen echten Fortschritt sichtbar.
+00:32–00:34  Und das Beste?
+00:34–00:37  Du musst deinen Weg nicht alleine gehen.
+00:37–00:41  Entdecke Menschen, die deine Interessen und Ziele teilen.
+00:42–00:43  Deine Ziele.
+00:43–00:45  Deine Finanzen.
+00:45–00:46  Deine Menschen.
+00:47–00:50  Ein einziges Universum.
+00:51–00:54  Das ist nicht einfach nur eine App.
+00:55–00:57  Das ist VYBE.
+
+Hinweis: Eine eigene Aufnahme (48 kHz WAV) kann mit ffmpeg unter das fertige Video gelegt werden, siehe README.md.

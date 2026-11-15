@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>VYBE Promo Stage</title>
+<style>
+@font-face { font-family: 'SG'; src: url(node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-700-normal.woff2) format('woff2'); font-weight: 700; }
+@font-face { font-family: 'SG'; src: url(node_modules/@fontsource/space-grotesk/files/space-grotesk-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+@font-face { font-family: 'IN'; src: url(node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: 'IN'; src: url(node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2) format('woff2'); font-weight: 600; }
+:root { --v: 139 92 246; --c: 34 211 238; --bg: #080810; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--bg); }
+#stage { position: absolute; inset: 0; overflow: hidden; background: var(--bg); font-family: 'IN', sans-serif; color: #fff; }
+.abs { position: absolute; }
+.glow { position: absolute; border-radius: 50%; filter: blur(120px); will-change: transform, opacity; }
+canvas { position: absolute; inset: 0; }
+.center { left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.display { font-family: 'SG', sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+.tag { font-family: 'SG', sans-serif; font-weight: 500; letter-spacing: 0.32em; text-transform: uppercase; }
+.glass { background: linear-gradient(180deg, rgba(28,28,44,.78), rgba(18,18,30,.62)); border: 1px solid rgba(255,255,255,.09); box-shadow: 0 0 0 1px rgba(var(--v),.10), 0 30px 80px -20px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.06); backdrop-filter: blur(20px); border-radius: 36px; }
+/* phone */
+.persp { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; perspective: 2200px; }
+.phone { position: absolute; width: 600px; height: 1298px; left: 240px; top: 180px; border-radius: 92px; padding: 16px;
+  background: linear-gradient(140deg, #3a3a4c, #121218 30%, #0b0b10 60%, #2c2c3a); box-shadow: 0 0 0 2px rgba(255,255,255,.07), 0 80px 160px -40px rgba(0,0,0,.95), 0 0 120px -10px rgba(var(--v),.35); transform-style: preserve-3d; }
+.screen { position: relative; width: 100%; height: 100%; border-radius: 78px; overflow: hidden; background: #08080d; }
+.screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+.island { position: absolute; left: 50%; top: 22px; width: 150px; height: 42px; border-radius: 24px; background: #000; transform: translateX(-50%); z-index: 5; }
+.glare { position: absolute; inset: 0; border-radius: 78px; pointer-events: none; z-index: 6; mix-blend-mode: screen; }
+/* captions */
+#cap { position: absolute; left: 90px; right: 150px; top: 1420px; text-align: center; font-family: 'SG', sans-serif; font-weight: 700; font-size: 66px; line-height: 1.12; letter-spacing: -0.015em; text-shadow: 0 4px 30px rgba(0,0,0,.85); }
+#cap span { display: inline-block; margin: 0 .14em; will-change: transform, opacity; }
+#cap .hv { color: rgb(var(--v)); text-shadow: 0 0 34px rgba(var(--v),.6); }
+#cap .hc { color: rgb(var(--c)); text-shadow: 0 0 34px rgba(var(--c),.55); }
+.card { position: absolute; padding: 30px 34px; }
+.chip { display: inline-flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; font: 600 28px 'IN'; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); }
+.xp { font: 700 54px 'SG'; color: rgb(var(--c)); text-shadow: 0 0 30px rgba(var(--c),.8); }
+.note { position: absolute; left: 0; right: 0; top: 1770px; text-align: center; font: 400 22px 'IN'; color: rgba(255,255,255,.45); letter-spacing: .02em; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="glow" id="g1" style="width:1100px;height:1100px;background:rgb(var(--v))"></div>
+  <div class="glow" id="g2" style="width:900px;height:900px;background:rgb(var(--c))"></div>
+  <canvas id="fx" width="1080" height="1920"></canvas>
+  <div id="layer"></div>
+  <div id="cap"></div>
+  <div class="note" id="note"></div>
+  <div id="flash" class="abs" style="inset:0;background:radial-gradient(circle at 50% 45%, #fff, rgb(var(--v)) 40%, transparent 75%);opacity:0;mix-blend-mode:screen"></div>
+  <div id="fade" class="abs" style="inset:0;background:#000;opacity:0"></div>
+</div>
+<script>
+// ---------------------------------------------------------------- helpers
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => cl((t - a) / (b - a));
+const eo = (x) => 1 - Math.pow(1 - x, 3);           // ease out cubic
+const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const back = (x) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, p) => a + (b - a) * p;
+const win = (t, a, b, fi = .35, fo = .35) => Math.min(seg(t, a, a + fi), 1 - seg(t, b - fo, b)); // visible window with fades
+const $ = (h) => { const d = document.createElement('div'); d.innerHTML = h.trim(); return d.firstChild; };
+const layer = document.getElementById('layer');
+const add = (h) => { const n = $(h); layer.appendChild(n); return n; };
+const S = (el, o) => { for (const k in o) el.style[k] = o[k]; };
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+// ---------------------------------------------------------------- elements
+const SCREENS = ['home', 'character', 'missions', 'habits', 'stats', 'money', 'achievements', 'discover', 'creator', 'chat', 'game', 'feed', 'companion'];
+const persp = add('<div class="persp"></div>');
+const phone = $(`<div class="phone"><div class="screen"><div class="island"></div>${SCREENS.map((s) => `<img id="s-${s}" src="assets/screens/${s}.png">`).join('')}<div class="glare" id="glare"></div></div></div>`);
+persp.appendChild(phone);
+const scr = Object.fromEntries(SCREENS.map((s) => [s, document.getElementById('s-' + s)]));
+const glare = document.getElementById('glare');
+
+// Ring (hook + level)
+const ring = add(`<svg class="abs" width="560" height="560" viewBox="0 0 560 560" style="left:260px;top:560px">
+  <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgb(139,92,246)"/><stop offset="1" stop-color="rgb(34,211,238)"/></linearGradient>
+  <filter id="bl"><feGaussianBlur stdDeviation="10"/></filter></defs>
+  <circle cx="280" cy="280" r="220" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="22"/>
+  <circle id="rArcB" cx="280" cy="280" r="220" fill="none" stroke="url(#rg)" stroke-width="30" stroke-linecap="round" filter="url(#bl)" transform="rotate(-90 280 280)" stroke-dasharray="1382" stroke-dashoffset="1382" opacity=".8"/>
+  <circle id="rArc" cx="280" cy="280" r="220" fill="none" stroke="url(#rg)" stroke-width="22" stroke-linecap="round" transform="rotate(-90 280 280)" stroke-dasharray="1382" stroke-dashoffset="1382"/>
+  <text id="rTxt" x="280" y="318" text-anchor="middle" font-family="SG" font-weight="700" font-size="120" fill="#fff"></text>
+  <text id="rSub" x="280" y="376" text-anchor="middle" font-family="SG" font-weight="500" font-size="30" letter-spacing="8" fill="rgba(255,255,255,.6)"></text>
+</svg>`);
+const rArc = ring.querySelector('#rArc'), rArcB = ring.querySelector('#rArcB'), rTxt = ring.querySelector('#rTxt'), rSub = ring.querySelector('#rSub');
+const tagline = add('<div class="abs tag" style="left:0;right:0;top:1230px;text-align:center;font-size:40px;color:rgba(255,255,255,.92)">Your Life. <span style="color:rgb(var(--c))">Your Universe.</span></div>');
+
+// Scene B: mission cards
+const MISS = [['Wasser trinken', '+20 XP', 'Fitness'], ['20 Minuten lesen', '+30 XP', 'Intelligenz'], ['10 € sparen', '+40 XP', 'Finanzen']];
+const mcards = MISS.map(([t, xp, a], i) => add(`<div class="glass card" style="left:150px;width:780px;top:${480 + i * 190}px;display:flex;align-items:center;gap:30px">
+  <div class="mchk" style="width:86px;height:86px;border-radius:50%;border:4px solid rgba(255,255,255,.18);display:grid;place-items:center;flex:none"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity:0"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+  <div style="flex:1"><div style="font:600 40px IN">${t}</div><div style="font:400 26px IN;color:rgba(255,255,255,.55);margin-top:6px">${a} · Täglich</div></div>
+  <div class="xp" style="font-size:44px;opacity:0">${xp}</div></div>`));
+const profileCard = add(`<div class="glass card" style="left:150px;width:780px;top:1080px;display:flex;align-items:center;gap:34px;padding:34px 40px">
+  <div style="width:150px;height:150px;border-radius:50%;padding:5px;background:conic-gradient(rgb(var(--v)),rgb(var(--c)),rgb(var(--v)));box-shadow:0 0 60px rgba(var(--v),.6)"><div style="width:100%;height:100%;border-radius:50%;background:#14141f;display:grid;place-items:center;font:700 70px SG;color:rgb(var(--c))">A</div></div>
+  <div><div class="tag" style="font-size:24px;color:rgba(255,255,255,.55)">Architekt</div><div class="display" style="font-size:76px;line-height:1">Level <span id="pcLvl">8</span></div>
+  <div style="margin-top:16px;width:420px;height:14px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden"><div id="pcBar" style="height:100%;width:0;background:linear-gradient(90deg,rgb(var(--v)),rgb(var(--c)));box-shadow:0 0 20px rgba(var(--c),.8)"></div></div></div></div>`);
+
+// Scene C: attributes + radar
+const ATTR = [['Disziplin', .5, '#a78bfa'], ['Intelligenz', .62, '#60a5fa'], ['Fitness', .88, '#34d399'], ['Finanzen', .38, '#fbbf24'], ['Kreativität', .5, '#f472b6'], ['Soziales', .25, '#22d3ee']];
+const radar = add(`<svg class="abs" width="900" height="900" viewBox="-450 -450 900 900" style="left:90px;top:300px">
+  ${[1, .75, .5, .25].map((k) => `<polygon points="${ATTR.map((_, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `${Math.cos(a) * 300 * k},${Math.sin(a) * 300 * k}`; }).join(' ')}" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="2"/>`).join('')}
+  ${ATTR.map((_, i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `<line x1="0" y1="0" x2="${Math.cos(a) * 300}" y2="${Math.sin(a) * 300}" stroke="rgba(255,255,255,.08)" stroke-width="2"/>`; }).join('')}
+  <defs><linearGradient id="rf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="rgb(139,92,246)" stop-opacity=".65"/><stop offset="1" stop-color="rgb(34,211,238)" stop-opacity=".35"/></linearGradient></defs>
+  <polygon id="rpoly" fill="url(#rf)" stroke="rgb(139,92,246)" stroke-width="5" stroke-linejoin="round"/>
+  ${ATTR.map(([n, , col], i) => { const a = -Math.PI / 2 + i * Math.PI / 3; return `<g class="rlab" opacity="0"><circle cx="${Math.cos(a) * 300}" cy="${Math.sin(a) * 300}" r="9" fill="${col}"/><text x="${Math.cos(a) * 372}" y="${Math.sin(a) * 372 + 12}" text-anchor="middle" font-family="SG" font-weight="700" font-size="38" fill="#fff">${n}</text></g>`; }).join('')}
+</svg>`);
+const rpoly = radar.querySelector('#rpoly'), rlabs = [...radar.querySelectorAll('.rlab')];
+const levelUp = add('<div class="abs display" style="left:0;right:0;top:640px;text-align:center;font-size:150px;opacity:0;background:linear-gradient(100deg,rgb(var(--v)),rgb(var(--c)));-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 0 40px rgba(var(--v),.7))">LEVEL UP</div>');
+const levelNum = add('<div class="abs display" style="left:0;right:0;top:820px;text-align:center;font-size:110px;opacity:0">Level 9</div>');
+
+// Scene D overlays
+const dXp = add('<div class="abs glass" style="left:610px;top:300px;padding:22px 34px;border-radius:999px;opacity:0"><span class="xp" style="font-size:52px">+40 XP</span></div>');
+const dStreak = add('<div class="abs glass" style="left:120px;top:560px;padding:22px 34px;border-radius:999px;opacity:0;display:flex;gap:14px;align-items:center"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg><span class="display" style="font-size:52px;color:#fbbf24" id="dStreakN">17</span><span style="font:600 30px IN;color:rgba(255,255,255,.7)">Tage Serie</span></div>');
+const dCount = add('<div class="abs glass" style="left:560px;top:620px;padding:26px 36px;opacity:0"><div class="tag" style="font-size:22px;color:rgba(255,255,255,.55)">Gesamt-XP</div><div class="display" id="dCountN" style="font-size:84px">2.615</div></div>');
+const dSave = add(`<div class="abs glass" style="left:110px;top:430px;padding:28px 34px;opacity:0;display:flex;gap:26px;align-items:center">
+  <svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="14"/><circle id="dSaveArc" cx="70" cy="70" r="58" fill="none" stroke="rgb(34,211,238)" stroke-width="14" stroke-linecap="round" transform="rotate(-90 70 70)" stroke-dasharray="364" stroke-dashoffset="364"/><text id="dSaveP" x="70" y="82" text-anchor="middle" font-family="SG" font-weight="700" font-size="34" fill="#fff">0%</text></svg>
+  <div><div style="font:600 36px IN">Notgroschen</div><div style="font:400 28px IN;color:rgba(255,255,255,.6);margin-top:6px">Sparziel</div></div></div>`);
+const dSaveArc = dSave.querySelector('#dSaveArc'), dSaveP = dSave.querySelector('#dSaveP');
+const dAch = add(`<div class="abs glass" style="left:170px;top:1050px;width:740px;padding:30px 36px;opacity:0;display:flex;gap:28px;align-items:center;border-color:rgba(251,191,36,.45);box-shadow:0 0 60px -10px rgba(251,191,36,.6)">
+  <div style="width:110px;height:110px;border-radius:30px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(251,191,36,.35),rgba(244,63,94,.15));border:2px solid rgba(251,191,36,.6)"><svg width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+  <div><div class="tag" style="font-size:22px;color:#fbbf24">Erfolg freigeschaltet</div><div class="display" style="font-size:52px">Eine Woche Fokus</div></div></div>`);
+
+// Scene E: people cards + connections
+const PEOPLE = [['Mira', '24 · Berlin', 'M', ['Techno', 'Indie', 'Bouldern'], '78%', 130, 300], ['Jonas', '29 · Hamburg', 'J', ['Lesen', 'Lo-Fi', 'Dark'], '64%', 470, 640], ['Lea', '21 · München', 'L', ['Pop', 'Reisen', 'Serien'], '52%', 150, 980]];
+const pcards = PEOPLE.map(([n, sub, ini, chips, m, x, y]) => add(`<div class="glass card" style="left:${x}px;top:${y}px;width:470px;opacity:0">
+  <div style="display:flex;align-items:center;gap:20px"><div style="width:84px;height:84px;border-radius:50%;padding:3px;background:conic-gradient(rgb(var(--v)),rgb(var(--c)),rgb(var(--v)))"><div style="width:100%;height:100%;border-radius:50%;background:#14141f;display:grid;place-items:center;font:700 38px SG;color:rgb(var(--c))">${ini}</div></div>
+  <div style="flex:1"><div style="font:600 36px IN">${n} <span style="font:700 18px IN;color:#fbbf24;background:rgba(251,191,36,.15);padding:4px 10px;border-radius:99px;vertical-align:middle">DEMO</span></div><div style="font:400 24px IN;color:rgba(255,255,255,.55)">${sub}</div></div>
+  <div class="mt" style="font:700 34px SG;color:rgb(var(--c))">${m}</div></div>
+  <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:10px">${chips.map((c) => `<span class="chip" style="font-size:22px;padding:8px 16px">${c}</span>`).join('')}</div></div>`));
+const links = add(`<svg class="abs" width="1080" height="1920" style="left:0;top:0"><path id="ln1" d="M 365 520 C 520 600, 560 600, 705 660" fill="none" stroke="url(#lg)" stroke-width="4" stroke-dasharray="600" stroke-dashoffset="600"/><path id="ln2" d="M 705 860 C 600 930, 500 940, 385 1000" fill="none" stroke="url(#lg)" stroke-width="4" stroke-dasharray="600" stroke-dashoffset="600"/><defs><linearGradient id="lg"><stop offset="0" stop-color="rgb(139,92,246)"/><stop offset="1" stop-color="rgb(34,211,238)"/></linearGradient></defs></svg>`);
+const ln1 = links.querySelector('#ln1'), ln2 = links.querySelector('#ln2');
+const matchBadge = add('<div class="abs glass display" style="left:300px;top:1240px;width:480px;text-align:center;padding:24px;font-size:56px;opacity:0;border-color:rgba(var(--c),.6);box-shadow:0 0 70px -10px rgba(var(--c),.7)">78% <span style="color:rgb(var(--c))">Match</span></div>');
+
+// Scene F: floating panels
+const FLOAT = ['missions', 'money', 'stats', 'feed', 'companion'];
+const floats = FLOAT.map((s) => add(`<div class="abs" style="width:330px;height:420px;border-radius:34px;overflow:hidden;opacity:0;border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 80px -10px rgba(0,0,0,.9),0 0 50px -10px rgba(var(--v),.5)"><img src="assets/screens/${s}.png" style="width:100%;margin-top:-40px"></div>`));
+const floatLabels = ['Missionen', 'Finanzen', 'Statistik', 'Community', 'Companion'].map((l) => add(`<div class="abs tag" style="font-size:24px;opacity:0;color:rgba(255,255,255,.85)">${l}</div>`));
+
+// Scene G: hero profile
+const hero = add(`<div class="abs" style="left:0;right:0;top:330px;text-align:center;opacity:0">
+  <div id="hAura" style="margin:0 auto;width:420px;height:420px;border-radius:50%;padding:12px;background:conic-gradient(rgb(var(--v)),rgb(var(--c)),rgb(var(--v)));box-shadow:0 0 140px rgba(var(--v),.8)"><div style="width:100%;height:100%;border-radius:50%;background:#101019;display:grid;place-items:center"><span class="display" style="font-size:190px;background:linear-gradient(120deg,rgb(var(--v)),rgb(var(--c)));-webkit-background-clip:text;color:transparent">A</span></div></div>
+  <div class="tag" style="margin-top:56px;font-size:34px;color:rgba(255,255,255,.65)" id="hTitle">Architekt</div>
+  <div class="display" style="font-size:150px;line-height:1.05">Level <span id="hLvl">9</span></div>
+  <div style="display:flex;justify-content:center;gap:16px;margin-top:30px">${['Disziplin', 'Fitness', 'Soziales'].map((c) => `<span class="chip">${c}</span>`).join('')}</div></div>`);
+const hLvl = hero.querySelector('#hLvl'), hAura = hero.querySelector('#hAura');
+
+// Scene H: logo
+const logo = add(`<div class="abs" style="left:0;right:0;top:640px;text-align:center;opacity:0">
+  <div style="position:relative;width:300px;height:300px;margin:0 auto;border-radius:66px;overflow:hidden;box-shadow:0 0 120px rgba(var(--v),.55)"><img src="assets/icon.svg" style="width:100%;height:100%"><div id="sweep" style="position:absolute;top:-20%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:rotate(18deg)"></div></div>
+  <div class="display" style="font-size:150px;margin-top:60px;letter-spacing:.08em">VYBE</div>
+  <div class="tag" style="font-size:34px;margin-top:18px;color:rgba(255,255,255,.75)">Your Life. <span style="color:rgb(var(--c))">Your Universe.</span></div></div>`);
+const sweep = logo.querySelector('#sweep');
+
+// ---------------------------------------------------------------- captions
+const HV = new Set(['Spiel', 'Charakter.', 'stärker.', 'Menschen,', 'Universum.', 'VYBE.', 'weiter.']);
+const HC = new Set(['sichtbar.', 'Fortschritt', 'Ziele.', 'Finanzen.', 'Menschen.', 'App.']);
+const LINES = [
+  [0.6, 4.6, 'Was wäre, wenn dein Leben plötzlich ein Spiel wäre?'],
+  [5.3, 6.6, 'Jede Aufgabe.'], [6.6, 8.0, 'Jede Gewohnheit.'], [8.0, 10.0, 'Jeder Schritt nach vorne.'], [10.2, 12.6, 'Alles bringt dich weiter.'],
+  [13.3, 15.8, 'Entwickle deinen Charakter.'], [15.8, 18.6, 'Verbessere deine Fähigkeiten.'], [18.8, 22.6, 'Und werde jeden Tag ein Stück stärker.'],
+  [23.3, 26.6, 'Ob Lernen, Training oder Sparen.'], [26.8, 31.6, 'VYBE macht deinen echten Fortschritt sichtbar.'],
+  [32.3, 34.0, 'Und das Beste?'], [34.0, 37.4, 'Du musst deinen Weg nicht alleine gehen.'], [37.6, 41.6, 'Entdecke Menschen, die deine Interessen und Ziele teilen.'],
+  [42.3, 43.8, 'Deine Ziele.'], [43.8, 45.3, 'Deine Finanzen.'], [45.3, 46.9, 'Deine Menschen.'], [47.2, 50.6, 'Ein einziges Universum.'],
+  [51.3, 54.6, 'Das ist nicht einfach nur eine App.'], [55.4, 57.8, 'Das ist VYBE.'],
+];
+window.LINES = LINES;
+const cap = document.getElementById('cap');
+let capIdx = -1, capSpans = [];
+function renderCaption(t) {
+  const i = LINES.findIndex(([a, b]) => t >= a && t < b);
+  if (i !== capIdx) {
+    capIdx = i; cap.innerHTML = '';
+    capSpans = i < 0 ? [] : LINES[i][2].split(' ').map((w) => { const s = document.createElement('span'); s.textContent = w; if (HV.has(w)) s.className = 'hv'; if (HC.has(w)) s.className = 'hc'; cap.appendChild(s); return s; });
+  }
+  if (i < 0) return;
+  const [a, b] = LINES[i];
+  const n = capSpans.length, dur = Math.min(b - a - .4, n * .32);
+  const out = seg(t, b - .22, b);
+  capSpans.forEach((s, k) => {
+    const p = eo(seg(t, a + (k / n) * dur, a + (k / n) * dur + .28));
+    S(s, { opacity: p * (1 - out), transform: `translateY(${(1 - p) * 18}px) scale(${.94 + p * .06})` });
+  });
+  cap.style.top = (t >= 51 && t < 58) ? '1300px' : (t < 5 ? '1460px' : '1420px');
+  cap.style.fontSize = (t >= 55.4 && t < 58) ? '96px' : '66px';
+}
+
+// ---------------------------------------------------------------- particles
+const cv = document.getElementById('fx'), cx = cv.getContext('2d');
+const P = Array.from({ length: 170 }, () => ({ x: rnd() * 1080, y: rnd() * 1920, r: .6 + rnd() * 2.2, v: 8 + rnd() * 26, ph: rnd() * 6.28, c: rnd() < .55 ? 'v' : 'c' }));
+const BURSTS = [[3.4, 540, 840, 90], [20.4, 540, 900, 70], [52.6, 540, 640, 100], [58.4, 540, 790, 60]];
+const BP = BURSTS.map(([t0, x, y, n]) => Array.from({ length: n }, () => ({ a: rnd() * 6.283, s: 260 + rnd() * 900, r: 1.5 + rnd() * 3.5, c: rnd() < .5 ? 'v' : 'c', t0, x, y })));
+function renderParticles(t, amt) {
+  cx.clearRect(0, 0, 1080, 1920);
+  for (const p of P) {
+    const y = ((p.y - p.v * t) % 1920 + 1920) % 1920;
+    const tw = .35 + .65 * (.5 + .5 * Math.sin(t * 1.7 + p.ph));
+    cx.globalAlpha = amt * tw * .55;
+    cx.fillStyle = p.c === 'v' ? 'rgb(167,139,250)' : 'rgb(103,232,249)';
+    cx.beginPath(); cx.arc(p.x + Math.sin(t * .4 + p.ph) * 14, y, p.r, 0, 6.283); cx.fill();
+  }
+  for (const group of BP) for (const p of group) {
+    const dt = t - p.t0; if (dt < 0 || dt > 1.4) continue;
+    const k = eo(dt / 1.4);
+    cx.globalAlpha = (1 - dt / 1.4) * .95;
+    cx.fillStyle = p.c === 'v' ? 'rgb(167,139,250)' : 'rgb(103,232,249)';
+    cx.beginPath(); cx.arc(p.x + Math.cos(p.a) * p.s * k, p.y + Math.sin(p.a) * p.s * k, p.r * (1 - k * .5), 0, 6.283); cx.fill();
+  }
+  cx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------- phone helper
+function showPhone(o) {
+  S(phone, { opacity: o.op, transform: `translate3d(${o.x || 0}px, ${o.y || 0}px, ${o.z || 0}px) rotateX(${o.rx || 0}deg) rotateY(${o.ry || 0}deg) rotateZ(${o.rz || 0}deg) scale(${o.s || 1})` });
+  S(glare, { background: `linear-gradient(${115 + (o.ry || 0) * 2}deg, rgba(255,255,255,0) 30%, rgba(255,255,255,${.07 + Math.abs(o.ry || 0) * .004}) 45%, rgba(255,255,255,0) 60%)` });
+}
+function screens(map) { for (const s of SCREENS) scr[s].style.opacity = map[s] || 0; }
+function xfade(t, list) { // list: [[name, start], ...] crossfades .3s
+  const m = {}; list.forEach(([n, a], i) => { const b = list[i + 1] ? list[i + 1][1] : 1e9; m[n] = Math.min(seg(t, a - .15, a + .15), 1 - seg(t, b - .15, b + .15)); }); return m;
+}
+
+// ---------------------------------------------------------------- render
+window.render = function (t) {
+  // background glows (aura shift violet -> cyan at the climax)
+  const aura = seg(t, 53, 55.5) * (1 - seg(t, 57.6, 58.2));
+  const bgOn = seg(t, 2.8, 4.4) * (1 - seg(t, 58, 58.3)) + seg(t, 58.4, 59.4) * .5 * (1 - seg(t, 60.2, 61));
+  S(document.getElementById('g1'), { left: `${-200 + Math.sin(t * .23) * 120}px`, top: `${-250 + Math.cos(t * .19) * 120}px`, opacity: bgOn * lerp(.32, .12, aura) });
+  S(document.getElementById('g2'), { left: `${380 + Math.cos(t * .21) * 120}px`, top: `${1150 + Math.sin(t * .17) * 120 - aura * 700}px`, opacity: bgOn * lerp(.18, .42, aura), transform: `scale(${1 + aura * .6})` });
+  renderParticles(t, cl(seg(t, 3.2, 4.5) * (1 - seg(t, 58, 58.3)) + seg(t, 58.4, 59) * .6 * (1 - seg(t, 60.3, 61))));
+
+  // A — hook (0–5): light point -> XP ring
+  const dot = seg(t, .3, 1.2) * (1 - seg(t, 3.3, 3.5));
+  const ringOn = (t < 13) ? seg(t, 3.3, 3.6) * (1 - seg(t, 4.75, 5.1)) : 0;
+  const lvlRing = win(t, 5.2, 12.9, .5, .4); // scene B level ring (top)
+  if (t < 13) {
+    const p = t < 5.2 ? eo(seg(t, 3.35, 4.6)) : eio(seg(t, 5.6, 12.2)) * .62 + .18;
+    const op = Math.max(ringOn, lvlRing);
+    const sc = t < 5.2 ? (.6 + .4 * back(seg(t, 3.3, 3.9))) : .52;
+    S(ring, { opacity: op + dot, transform: t < 5.2 ? `scale(${dot && !ringOn ? .02 + .03 * Math.sin(t * 8) ** 2 + .05 * dot : sc})` : `translate(0,-520px) scale(${sc})` });
+    rArc.style.strokeDashoffset = 1382 * (1 - p); rArcB.style.strokeDashoffset = 1382 * (1 - p);
+    rTxt.textContent = t < 5.2 ? '' : 'XP'; rSub.textContent = '';
+    if (dot && !ringOn) { rArc.style.strokeDashoffset = 0; rArcB.style.strokeDashoffset = 0; }
+  } else S(ring, { opacity: 0 });
+  S(tagline, { opacity: seg(t, 3.8, 4.3) * (1 - seg(t, 4.75, 5.0)), transform: `translateY(${(1 - eo(seg(t, 3.8, 4.4))) * 30}px)`, letterSpacing: `${.32 + (1 - eo(seg(t, 3.8, 4.8))) * .2}em` });
+  S(document.getElementById('flash'), { opacity: Math.max(.9 * seg(t, 3.25, 3.4) * (1 - seg(t, 3.4, 3.9)), .7 * seg(t, 4.85, 5.0) * (1 - seg(t, 5.0, 5.4)), .8 * seg(t, 52.4, 52.55) * (1 - seg(t, 52.55, 53.1))) });
+
+  // B — idea (5–13): missions get ticked, profile assembles
+  const bOn = win(t, 5.0, 13.0, .5, .5);
+  mcards.forEach((c, i) => {
+    const tick = 5.7 + i * 1.45;
+    const p = eo(seg(t, 5.1 + i * .18, 5.8 + i * .18));
+    S(c, { opacity: bOn * p, transform: `translateX(${(1 - p) * (i % 2 ? 120 : -120)}px) rotateX(${(1 - p) * 20}deg)` });
+    const k = seg(t, tick, tick + .25);
+    const chk = c.querySelector('.mchk');
+    S(chk, { background: k > 0 ? `linear-gradient(135deg, rgba(139,92,246,${k}), rgba(34,211,238,${k}))` : 'transparent', borderColor: k > 0 ? 'transparent' : 'rgba(255,255,255,.18)', transform: `scale(${1 + .18 * Math.sin(Math.PI * seg(t, tick, tick + .35))})` });
+    chk.firstChild.style.opacity = k;
+    const xp = c.querySelector('.xp'); const xk = seg(t, tick + .1, tick + .45);
+    S(xp, { opacity: xk, transform: `translateY(${(1 - eo(xk)) * 24}px) scale(${.8 + .2 * back(xk)})` });
+  });
+  const pc = eo(seg(t, 10.3, 11.0));
+  S(profileCard, { opacity: bOn * pc, transform: `translateY(${(1 - pc) * 80}px) scale(${.92 + .08 * pc})` });
+  profileCard.querySelector('#pcBar').style.width = `${(.2 + .6 * eio(seg(t, 10.8, 12.4))) * 100}%`;
+
+  // C — character (13–23)
+  const cOn = win(t, 13.0, 23.1, .6, .5);
+  // D — progress (23–32), E — universe (32–42), F — all in one (42–51)
+  let ph = { op: 0 };
+  if (t >= 12.8 && t < 23.2) {
+    const inP = eo(seg(t, 12.9, 14.0));
+    const toSide = eio(seg(t, 15.6, 16.8)) * (1 - eio(seg(t, 19.6, 20.2)));
+    ph = { op: cOn * (1 - .85 * seg(t, 19.7, 20.2) * (1 - seg(t, 21.8, 22.4))), x: lerp(0, -330, toSide), y: lerp(260, 0, inP) + toSide * 120, z: lerp(-400, 0, inP) - toSide * 350, ry: lerp(-24, -8, inP) + toSide * 22 + Math.sin(t * .6) * 2, rx: lerp(14, 4, inP), s: lerp(.98, .94, inP) - toSide * .08 };
+    screens(xfade(t, [['home', 12.8], ['character', 17.4]]));
+  } else if (t >= 23.0 && t < 32.2) {
+    const pIn = eo(seg(t, 23.0, 23.6));
+    ph = { op: win(t, 23.0, 32.1, .4, .45), x: Math.sin(t * .5) * 18, y: -20 - pIn * 20, ry: 8 * Math.sin((t - 23) * .7), rx: 3, s: .92 + .02 * Math.sin(t * .8) };
+    screens(xfade(t, [['missions', 23.0], ['habits', 24.9], ['stats', 26.8], ['money', 28.8], ['achievements', 30.6]]));
+  } else if (t >= 35.2 && t < 42.2) {
+    const pIn = eo(seg(t, 35.2, 36.0));
+    ph = { op: win(t, 35.2, 42.1, .45, .4), y: lerp(500, 20, pIn), z: lerp(-500, 0, pIn), ry: -6 + Math.sin(t * .6) * 5, rx: lerp(18, 3, pIn), s: .92 };
+    screens(xfade(t, [['discover', 35.2], ['creator', 36.8], ['chat', 38.4], ['game', 40.3]]));
+  } else if (t >= 42.0 && t < 51.3) {
+    const push = eio(seg(t, 49.6, 51.2));
+    ph = { op: seg(t, 42.0, 42.5) * (1 - seg(t, 51.0, 51.3)), y: 40 - push * 40, z: push * 1500, ry: (t - 42) * 26 * (1 - seg(t, 48, 49.6)) + seg(t, 48, 49.6) * 0 + Math.sin((t - 42) * 1.1) * 4 * (1 - push), rx: 6 * (1 - push), s: .8 + push * .1 };
+    if (t < 49) ph.ry = Math.sin((t - 42) * .9) * 28; else ph.ry = Math.sin((49 - 42) * .9) * 28 * (1 - seg(t, 49, 49.8));
+    screens(xfade(t, [['home', 42.0]]));
+  }
+  showPhone(ph);
+
+  // C overlays: attributes + radar + level up
+  const rOn = win(t, 16.2, 23.0, .5, .5) * (1 - seg(t, 19.7, 20.0) * (1 - seg(t, 21.9, 22.3)));
+  const grow = eo(seg(t, 16.6, 19.0));
+  S(radar, { opacity: rOn, transform: `translateX(${150 - (1 - rOn) * 40}px) scale(${.72 + .08 * grow})` });
+  rpoly.setAttribute('points', ATTR.map(([, v], i) => { const a = -Math.PI / 2 + i * Math.PI / 3; const k = v * grow * (1 + .03 * Math.sin(t * 3 + i)); return `${Math.cos(a) * 300 * k},${Math.sin(a) * 300 * k}`; }).join(' '));
+  rlabs.forEach((l, i) => l.setAttribute('opacity', rOn * eo(seg(t, 16.4 + i * .38, 16.8 + i * .38))));
+  const lu = seg(t, 20.25, 20.5) * (1 - seg(t, 22.0, 22.4));
+  S(levelUp, { opacity: lu, transform: `scale(${.7 + .3 * back(seg(t, 20.25, 20.75))})` });
+  S(levelNum, { opacity: seg(t, 20.6, 20.9) * (1 - seg(t, 22.0, 22.4)), transform: `translateY(${(1 - eo(seg(t, 20.6, 21.1))) * 40}px)` });
+
+  // D overlays
+  const pop = (el, a, b, x0 = 0) => { const k = win(t, a, b, .3, .3); const e = back(seg(t, a, a + .5)); S(el, { opacity: k, transform: `translateX(${(1 - e) * x0}px) scale(${.85 + .15 * e})` }); };
+  pop(dXp, 23.9, 25.3, 60); pop(dStreak, 25.4, 27.2, -60); pop(dCount, 27.1, 29.0, 60); pop(dSave, 29.0, 30.9, -60); pop(dAch, 30.8, 32.1, 0);
+  document.getElementById('dStreakN').textContent = 16 + (t > 25.9 ? 1 : 0);
+  document.getElementById('dCountN').textContent = Math.round(lerp(2575, 2615, eo(seg(t, 27.3, 28.6)))).toLocaleString('de-DE');
+  const sp = eo(seg(t, 29.2, 30.4)) * .37; dSaveArc.style.strokeDashoffset = 364 * (1 - sp); dSaveP.textContent = Math.round(sp * 100) + '%';
+
+  // E — people + match (32–35.6)
+  const eOn = win(t, 32.2, 35.6, .4, .4);
+  pcards.forEach((c, i) => { const p = eo(seg(t, 32.3 + i * .3, 33.0 + i * .3)); S(c, { opacity: eOn * p, transform: `translateY(${(1 - p) * 60}px) scale(${i === 0 ? 1 + .05 * seg(t, 34.4, 34.8) : 1})`, borderColor: i === 0 && t > 34.4 ? 'rgba(34,211,238,.7)' : 'rgba(255,255,255,.09)' }); });
+  ln1.style.strokeDashoffset = 600 * (1 - eio(seg(t, 33.4, 34.2))); ln2.style.strokeDashoffset = 600 * (1 - eio(seg(t, 33.8, 34.6)));
+  links.style.opacity = eOn;
+  S(matchBadge, { opacity: eOn * seg(t, 34.4, 34.7), transform: `scale(${.8 + .2 * back(seg(t, 34.4, 34.9))})` });
+  document.getElementById('note').textContent = (t >= 32.2 && t < 42.2) ? 'Community live im geteilten VYBE-Link · in der App-Version mit Demo-Profilen' : (t >= 13 && t < 42.2 ? 'Echte Screens aus der VYBE-App · Demo-Profil' : '');
+  document.getElementById('note').style.opacity = (t >= 13 && t < 42.2) ? .9 * win(t, 13.2, 42.1, .5, .3) : 0;
+
+  // F — floating panels orbit, then retract (42–50)
+  floats.forEach((f, i) => {
+    const a = (i / FLOAT.length) * 6.283 + (t - 42) * .55;
+    const out = eo(seg(t, 42.3 + i * .15, 43.3 + i * .15)) * (1 - eio(seg(t, 48.2, 49.4)));
+    const r = 400 * out;
+    const x = 540 + Math.cos(a) * r - 165, y = 800 + Math.sin(a) * r * .9 - 210;
+    const depth = Math.sin(a);
+    S(f, { opacity: out * (t < 50 ? 1 : 0), left: x + 'px', top: y + 'px', transform: `scale(${(.55 + .2 * (depth + 1) / 2) * (.4 + .6 * out)}) rotateY(${Math.cos(a) * -18}deg)`, zIndex: depth > 0 ? 3 : 1 });
+    S(floatLabels[i], { opacity: out * .9, left: (x + 165 - 120) + 'px', width: '240px', textAlign: 'center', top: (y + 420 * ((.55 + .2 * (depth + 1) / 2) * (.4 + .6 * out)) / 2 + 225) + 'px' });
+  });
+  persp.style.zIndex = (t >= 42 && t < 50) ? 2 : 'auto';
+
+  // G — hero profile + level up + aura shift (51–58)
+  const gOn = seg(t, 51.0, 51.6) * (1 - seg(t, 57.7, 58.1));
+  S(hero, { opacity: gOn, transform: `scale(${.9 + .1 * eo(seg(t, 51, 52))})` });
+  hLvl.textContent = t > 52.5 ? '10' : '9';
+  hero.querySelector('#hTitle').textContent = t > 52.5 ? 'Architekt · Aura Cyan freigeschaltet' : 'Architekt';
+  const ac = aura;
+  S(hAura, { transform: `rotate(${(t - 51) * 40}deg) scale(${1 + .06 * Math.sin(Math.PI * seg(t, 52.4, 53.2))})`, background: `conic-gradient(rgb(${lerp(139, 34, ac)},${lerp(92, 211, ac)},${lerp(246, 238, ac)}), rgb(var(--c)), rgb(${lerp(139, 34, ac)},${lerp(92, 211, ac)},${lerp(246, 238, ac)}))`, boxShadow: `0 0 ${140 + 60 * ac}px rgba(${lerp(139, 34, ac)},${lerp(92, 211, ac)},${lerp(246, 238, ac)},.85)` });
+
+  // H — logo (58–61)
+  const hOn = seg(t, 58.3, 58.9);
+  S(logo, { opacity: hOn, transform: `scale(${.92 + .08 * eo(seg(t, 58.3, 59.4))})` });
+  sweep.style.left = `${lerp(-60, 160, eio(seg(t, 58.7, 59.8)))}%`;
+  S(document.getElementById('fade'), { opacity: Math.max(seg(t, 57.9, 58.25) * (1 - seg(t, 58.3, 58.6)), seg(t, 60.2, 61)) });
+
+  renderCaption(t);
+};
+document.fonts.ready.then(() => { window.__ready = true; });
+</script>
+</body>
+</html>
