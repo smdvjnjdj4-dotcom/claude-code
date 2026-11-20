@@ -78,13 +78,13 @@ export async function discover(db: DB, o: DiscoverOptions = {}): Promise<Discove
   const interests = o.interests?.length ? o.interests.filter((i) => /^[a-z]+$/.test(i)).join(",") : null;
 
   const order =
-    sort === "popular" ? sql`popularity desc, b.created_at desc`
-    : sort === "new" ? sql`b.created_at desc`
+    sort === "popular" ? sql`popularity desc, created_at desc`
+    : sort === "new" ? sql`created_at desc`
     : sort === "distance" && hasPoint ? sql`distance_m asc nulls last`
     : hasPoint
-      ? sql`(case when ${interests}::text is not null and b.category = any(string_to_array(${interests}::text, ',')) then 0 else 1 end),
+      ? sql`(case when ${interests}::text is not null and category = any(string_to_array(${interests}::text, ',')) then 0 else 1 end),
             distance_m / (1 + ln(1 + popularity)) asc nulls last`
-      : sql`(case when ${interests}::text is not null and b.category = any(string_to_array(${interests}::text, ',')) then 0 else 1 end), popularity desc, b.created_at desc`;
+      : sql`(case when ${interests}::text is not null and category = any(string_to_array(${interests}::text, ',')) then 0 else 1 end), popularity desc, created_at desc`;
 
   const rows = await db.execute(sql`
     select * from (

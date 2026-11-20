@@ -18,8 +18,14 @@ export const REWARD_TYPES: { id: RewardType; label: string; hint: string }[] = [
 ];
 
 const nullableInt = (min: number, max: number) =>
-  z.preprocess((v) => (v === "" || v === null || v === undefined ? null : v), z.coerce.number().int().min(min).max(max).nullable());
-const nullableDate = z.preprocess((v) => (v === "" || v == null ? null : v), z.coerce.date().nullable());
+  z
+    .preprocess((v) => (v === "" || v === null || v === undefined ? null : v), z.coerce.number().int().min(min).max(max).nullable())
+    .optional()
+    .transform((v) => v ?? null);
+const nullableDate = z
+  .preprocess((v) => (v === "" || v == null ? null : v), z.coerce.date().nullable())
+  .optional()
+  .transform((v) => v ?? null);
 
 export const programInput = z
   .object({

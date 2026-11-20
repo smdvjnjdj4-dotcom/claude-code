@@ -1,5 +1,5 @@
 import { eq, sql } from "drizzle-orm";
-import webpush from "web-push";
+import * as webpush from "web-push";
 import type { Tx } from "@/db";
 import { pushSubscriptions } from "@/db/schema";
 import { env } from "@/lib/env";
